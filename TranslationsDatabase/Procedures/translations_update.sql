@@ -3,8 +3,7 @@
 	@TranslationKey NVARCHAR(450),
 	@Text TEXT,
 	@Project NVARCHAR(450),
-	@LanguageId INT,
-	@UpdatedAt DATETIME
+	@LanguageId INT
 AS
 BEGIN
 	UPDATE [dbo].[Translations]

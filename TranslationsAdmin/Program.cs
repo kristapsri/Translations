@@ -1,3 +1,11 @@
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Extensions.Configuration;
+using System.Data.SqlClient;
+using System.Globalization;
+using TranslationsAdmin.Repositories;
+using TranslationsAdmin.Services;
+
 namespace TranslationsAdmin
 {
     public class Program
@@ -6,8 +14,32 @@ namespace TranslationsAdmin
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Configure sql connection
+            string connectionString = builder.Configuration.GetConnectionString("LocalTranslationsConnection");
+            SqlConnection connection = new SqlConnection(connectionString);
+
+            builder.Services.AddSingleton<ISqlServerConnection, SqlServerConnection>();
+            builder.Services.AddSingleton<ILanguageRepository, LanguageRepository>();
+            builder.Services.AddSingleton<ILanguageModelService, LanguageModelService>();
+            builder.Services.AddSingleton<SqlConnection>(connection);
+
+            builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
             builder.Services.AddControllersWithViews();
+
+            // Configure supported cultures
+            builder.Services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                    new CultureInfo("en-US"), // English (United States)
+                    new CultureInfo("lv")
+                };
+                options.DefaultRequestCulture = new RequestCulture("en");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+            });
+
+            // Add services to the container.
 
             var app = builder.Build();
 
@@ -19,6 +51,7 @@ namespace TranslationsAdmin
                 app.UseHsts();
             }
 
+            app.UseRequestLocalization();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 

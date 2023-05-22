@@ -1,83 +1,74 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using TranslationsAdmin.Models;
+using TranslationsAdmin.Services;
 
 namespace TranslationsAdmin.Controllers
 {
     public class LanguagesController : Controller
     {
-        // GET: TranslationController
-        public ActionResult Index()
+        private readonly ILanguageModelService _languageModelService;
+        public LanguagesController(ILanguageModelService languageModelService)
         {
-            return View();
+            _languageModelService = languageModelService;
+        }
+        public async Task<IActionResult> Index()
+        {
+            return View(await _languageModelService.GetAll());
         }
 
-        // GET: TranslationController/Details/5
-        public ActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            return View();
+            var language = await _languageModelService.Get(id);
+            if (language == null)
+            {
+                return NotFound();
+            }
+            return View(language);
         }
 
-        // GET: TranslationController/Create
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: TranslationController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create([Bind("Id,Locale,Name")] LanguageModel language)
         {
-            try
+            if (ModelState.IsValid)
             {
+                await _languageModelService.Create(language);
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
+            return View(language);
         }
 
-        // GET: TranslationController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            return View();
+            var language = await _languageModelService.Get(id);
+            if (language == null)
+            {
+                return NotFound();
+            }
+            return View(language);
         }
 
-        // POST: TranslationController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Locale,Name")] LanguageModel language)
         {
-            try
+            if (id != language.Id)
             {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                await _languageModelService.Update(language);
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
-        }
 
-        // GET: TranslationController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: TranslationController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            return View(language);
         }
     }
 }

@@ -1,25 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using TranslationsAdmin.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using System.Globalization;
 
 namespace TranslationsAdmin.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IStringLocalizer _localizer;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IStringLocalizer<HomeController> localizer)
         {
-            _logger = logger;
+            _localizer = localizer;
         }
 
         public IActionResult Index()
         {
-            return View();
-        }
+            // Access the localized string using IStringLocalizer
+            string greeting = _localizer["Hello"];
 
-        public IActionResult Privacy()
-        {
+            // Use the localized string in your view or logic
+            ViewData["Greeting"] = greeting;
+
             return View();
         }
 

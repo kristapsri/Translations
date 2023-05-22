@@ -66,6 +66,8 @@
     <Build Include="Procedures\translations_update.sql" />
     <Build Include="Tables\languages.sql" />
     <Build Include="Tables\translations.sql" />
+    <Build Include="Procedures\languages_select.sql" />
+    <Build Include="Procedures\languages_detail.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TranslationsDatabase.publish.xml" />

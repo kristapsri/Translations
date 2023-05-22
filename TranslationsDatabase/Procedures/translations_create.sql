@@ -3,17 +3,15 @@
 	@TranslationKey NVARCHAR(450),
 	@Text TEXT,
 	@Project NVARCHAR(450),
-	@LanguageId INT,
-	@CreatedAt DATETIME
+	@LanguageId INT
 AS
 BEGIN
-	INSERT INTO [dbo].[Translations] (TranslationGroup, TranslationKey, Text, Project, LanguageId, CreatedAt)
+	INSERT INTO [dbo].[Translations] (TranslationGroup, TranslationKey, Text, Project, LanguageId)
 	VALUES (
 		@TranslationGroup,
 		@TranslationKey,
 		@Text,
 		@Project,
-		@LanguageId,
-		GETDATE()
+		@LanguageId
 	)
 END
