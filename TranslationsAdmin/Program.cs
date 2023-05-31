@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Data.SqlClient;
-using System.Globalization;
+using System.Text;
 using TranslationsAdmin.Repositories;
 using TranslationsAdmin.Services;
 
@@ -18,50 +19,89 @@ namespace TranslationsAdmin
             string connectionString = builder.Configuration.GetConnectionString("LocalTranslationsConnection");
             SqlConnection connection = new SqlConnection(connectionString);
 
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
+
             builder.Services.AddSingleton<ISqlServerConnection, SqlServerConnection>();
             builder.Services.AddSingleton<ILanguageRepository, LanguageRepository>();
             builder.Services.AddSingleton<ILanguageModelService, LanguageModelService>();
+            builder.Services.AddSingleton<IUserRepository, UserRepository>();
+            builder.Services.AddSingleton<IUserService, UserService>();
+
+            builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+
             builder.Services.AddSingleton<SqlConnection>(connection);
 
-            builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddHostedService<KafkaConsumerService>();
 
-            // Configure supported cultures
-            builder.Services.Configure<RequestLocalizationOptions>(options =>
-            {
-                var supportedCultures = new[]
-                {
-                    new CultureInfo("en-US"), // English (United States)
-                    new CultureInfo("lv")
-                };
-                options.DefaultRequestCulture = new RequestCulture("en");
-                options.SupportedCultures = supportedCultures;
-                options.SupportedUICultures = supportedCultures;
+            builder.Services.AddControllers();
+
+            builder.Services.AddLogging(loggingBuilder => {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddSerilog(new LoggerConfiguration()
+                   .MinimumLevel
+                   .Debug()
+                   .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+                   .WriteTo.Console(outputTemplate: "{Timestamp:HH:mm} [{Level}] ({ThreadId}) {Message}{NewLine}{Exception}")
+                   .CreateLogger());
             });
 
-            // Add services to the container.
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+            });
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                };
+            });
 
             var app = builder.Build();
+            app.UseAuthentication();
+            app.UseHttpsRedirection();
+            app.UseAuthorization();
+            app.MapControllers();
 
             // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())
             {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
-            app.UseRequestLocalization();
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }

@@ -66,8 +66,15 @@
     <Build Include="Procedures\translations_update.sql" />
     <Build Include="Tables\languages.sql" />
     <Build Include="Tables\translations.sql" />
-    <Build Include="Procedures\languages_select.sql" />
+    <Build Include="Procedures\languages_all.sql" />
     <Build Include="Procedures\languages_detail.sql" />
+    <Build Include="Procedures\translations_detail.sql" />
+    <Build Include="Procedures\translations_all.sql" />
+    <Build Include="Procedures\users_authorize.sql" />
+    <Build Include="Tables\users.sql" />
+    <Build Include="Procedures\users_get.sql" />
+    <Build Include="Procedures\users_all.sql" />
+    <Build Include="Procedures\users_create.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TranslationsDatabase.publish.xml" />

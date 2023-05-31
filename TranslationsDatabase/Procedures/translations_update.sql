@@ -1,4 +1,5 @@
 ﻿CREATE PROCEDURE [dbo].[translations_update]
+	@Id int,
 	@TranslationGroup NVARCHAR(450),
 	@TranslationKey NVARCHAR(450),
 	@Text TEXT,
@@ -14,7 +15,5 @@ BEGIN
 		Project = @Project,
 		LanguageId = @LanguageId,
 		UpdatedAt = GETDATE()
-	WHERE TranslationGroup = @TranslationGroup 
-	AND TranslationKey = @TranslationKey
-	AND Project = @Project
+	WHERE Id = @Id
 END

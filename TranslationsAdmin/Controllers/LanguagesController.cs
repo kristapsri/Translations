@@ -1,74 +1,61 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TranslationsAdmin.Models;
 using TranslationsAdmin.Services;
 
 namespace TranslationsAdmin.Controllers
 {
+    [Route("api/languages")]
+    [ApiController]
     public class LanguagesController : Controller
     {
         private readonly ILanguageModelService _languageModelService;
-        public LanguagesController(ILanguageModelService languageModelService)
+        private readonly ILogger<LanguagesController> _logger;
+
+        public LanguagesController(ILanguageModelService languageModelService, ILogger<LanguagesController> logger)
         {
             _languageModelService = languageModelService;
-        }
-        public async Task<IActionResult> Index()
-        {
-            return View(await _languageModelService.GetAll());
+            _logger = logger;
         }
 
+        [Authorize]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            _logger.LogInformation("All languages requested");
+
+            return Ok(await _languageModelService.GetAll());
+        }
+
+        [Authorize]
+        [HttpGet("detail")]
         public async Task<IActionResult> Details(int id)
         {
             var language = await _languageModelService.Get(id);
-            if (language == null)
-            {
-                return NotFound();
-            }
-            return View(language);
+            return language != null ? Ok(language) : NotFound();
         }
 
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [Authorize]
+        [HttpPost("create")]
         public async Task<IActionResult> Create([Bind("Id,Locale,Name")] LanguageModel language)
         {
-            if (ModelState.IsValid)
-            {
-                await _languageModelService.Create(language);
-                return RedirectToAction(nameof(Index));
-            }
-            return View(language);
+            var result = await _languageModelService.Create(language);
+
+            return result != null ? Ok(result) : BadRequest();
         }
 
-        public async Task<IActionResult> Edit(int id)
-        {
-            var language = await _languageModelService.Get(id);
-            if (language == null)
-            {
-                return NotFound();
-            }
-            return View(language);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Locale,Name")] LanguageModel language)
+        [Authorize]
+        [HttpPost("update")]
+        public async Task<IActionResult> Update(int id, [Bind("Id,Locale,Name")] LanguageModel language)
         {
             if (id != language.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
-            {
-                await _languageModelService.Update(language);
-                return RedirectToAction(nameof(Index));
-            }
+            bool result = await _languageModelService.Update(language);
 
-            return View(language);
+            return result ? Ok() : NotFound();
         }
     }
 }

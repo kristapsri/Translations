@@ -1,4 +1,5 @@
-﻿using TranslationsAdmin.Models;
+﻿using System.Xml.Linq;
+using TranslationsAdmin.Models;
 using TranslationsAdmin.Services;
 
 namespace TranslationsAdmin.Repositories
@@ -7,7 +8,7 @@ namespace TranslationsAdmin.Repositories
     {
         Task<LanguageModel?> Get(int id);
         Task<IEnumerable<LanguageModel>> GetAll(int page = 1, int perPage = 10);
-        Task Create(string locale, string name);
+        Task<LanguageModel?> Create(string locale, string name);
         Task Update(int id, string locale, string name);
     }
 
@@ -27,14 +28,24 @@ namespace TranslationsAdmin.Repositories
             perPage = perPage < 1 ? 1 : 10;
             page--;
 
-            return await _db.Execute<LanguageModel, dynamic>("dbo.languages_select", new { Offset = page, Limit = perPage });
+            return await _db.Execute<LanguageModel, dynamic>("dbo.languages_all", new { Offset = page, Limit = perPage });
         }
 
-        public Task Create(string locale, string name) => _db.Execute("dbo.languages_create", new
+        public async Task<LanguageModel?> Create(string locale, string name)
         {
-            Locale = locale,
-            Name = name
-        });
+            var queryResponse = await _db.Execute<LanguageModel, dynamic>("dbo.languages_create", new
+            {
+                Locale = locale,
+                Name = name
+            });
+            var data = queryResponse.FirstOrDefault();
+            if (data != null)
+            {
+                return await Get(data.Id);
+            }
+
+            return null;
+        }
 
         public Task Update(int id, string locale, string name) => _db.Execute("dbo.languages_update", new
         {

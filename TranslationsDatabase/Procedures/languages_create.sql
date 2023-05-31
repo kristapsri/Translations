@@ -4,6 +4,7 @@
 AS
 BEGIN
 	INSERT INTO [dbo].[Languages] (Locale, Name)
+	OUTPUT INSERTED.*
 	VALUES (
 		@Locale,
 		@Name
