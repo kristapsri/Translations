@@ -31,7 +31,6 @@ namespace TranslationsAdmin.Services
 
         private async Task ExecuteTaskAsync(ConsumerConfig config)
         {
-            _logger.LogInformation("Consumer kafka started");
             try
             {
                 using var consumerBuilder = new ConsumerBuilder<Ignore, string>(config).Build();
@@ -44,7 +43,6 @@ namespace TranslationsAdmin.Services
                     while (true)
                     {
                         var consumer = consumerBuilder.Consume(cancelToken.Token);
-                        _logger.LogInformation($"Language has been update and logged from kafka event {consumer.Message.Value}");
                     }
 
                 }

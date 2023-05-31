@@ -1,5 +1,4 @@
 ﻿using Confluent.Kafka;
-using System.Diagnostics.Contracts;
 
 namespace TranslationsAdmin.Services
 {
